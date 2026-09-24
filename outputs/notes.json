@@ -1,0 +1,114 @@
+{
+  "topic": "Memorizing CFA Standards of Conduct Using the Memory-Palace Technique",
+  "summary": "This section explains how to effectively memorize the 7 CFA standards of conduct and 22 substandards using a memory-palace technique combined with a narrative journey. It details how personal characteristics, the capital market, clients, employers, the investment process, conflicts of interest, and CFA responsibilities correspond to specific locations in the narrative. Through this spatial association, students can easily retain large amounts of ethics information for exams.",
+  "cornell_notes": [
+    {
+      "cue": "Why is memorizing the 7 standards and 22 substandards recommended for the CFA exam?",
+      "note": "Memorizing the 7 standards of conduct and 22 substandards allows you to see the big picture of ethics and significantly improves your overall ethics scores, which is crucial for passing level 3."
+    },
+    {
+      "cue": "What technique does the speaker use to make memorizing less burdensome?",
+      "note": "The speaker adopts the memory-palace technique, which mixes long-term memory (a familiar palace) with short-term memory (the items to remember) to create effective mid-term memory through a narrative."
+    },
+    {
+      "cue": "What is the first standard of conduct and how are its substandards visualized?",
+      "note": "The first standard is Professionalism. It is visualized through your own body from top to bottom: head for knowledge of the law, eyes for independence and objectivity, mouth for no misrepresentation, and hands for no professional misconduct."
+    },
+    {
+      "cue": "What represents the second standard of conduct on the memory journey?",
+      "note": "The second standard is Integrity of the Capital Market. On the road to the capital market, you encounter material non-public information and the temptation of market manipulation, which you avoid to uphold capital market integrity."
+    },
+    {
+      "cue": "How are the substandards for the third standard of conduct (Duties to Clients) memorized?",
+      "note": "They are memorized by looking at clients from bottom to top: shoes for loyalty, prudence, and care; shoes for fair dealing; shoes for suitability; investment performance on the client's knee; and preserving performance information in a five-year client folder."
+    },
+    {
+      "cue": "What are the substandards associated with the fourth standard of conduct (Duties to Employers)?",
+      "note": "Entering the company involves loyalty to your employer, going to the cafeteria for free lunch representing additional compensation arrangements, and going to the sky lounge to supervise staff for which you are responsible."
+    },
+    {
+      "cue": "How is the fifth standard of conduct (Investment Process) structured in the office?",
+      "note": "At your office desk, you read papers and books for diligent and reasonable investment opportunities, communicate them via phone and email, and put relevant documents into your drawer for record retention."
+    },
+    {
+      "cue": "What locations and rules represent the sixth standard of conduct (Conflicts of Interest)?",
+      "note": "At the metro station and platform, an electronic display shows disclosed conflicts. Transaction priority rules dictate that clients and employers enter before you, and you must account for paying referral fees."
+    },
+    {
+      "cue": "What represents the seventh standard of conduct for CFA candidates?",
+      "note": "The seventh standard is the Responsibilities of a CFA Candidate, represented by a broadcast on the platform announcing the conduct rules for participants in CFA Institute programs, followed by checking your own business card."
+    }
+  ],
+  "mcqs": [
+    {
+      "question": "According to the speaker, why did he fail level 3 of the CFA exam initially?",
+      "options": [
+        "Due to low scores in ethics",
+        "Because he did not study quantitative methods",
+        "Because he memorized too many standards",
+        "Due to a lack of sleep"
+      ],
+      "answer": "Due to low scores in ethics"
+    },
+    {
+      "question": "What memory technique is recommended to memorize the standards and substandards?",
+      "options": [
+        "Flashcard repetition",
+        "The memory-palace technique",
+        "Mind mapping",
+        "Auditory recording"
+      ],
+      "answer": "The memory-palace technique"
+    },
+    {
+      "question": "In the narrative for Professionalism, what do the eyes represent?",
+      "options": [
+        "Knowledge of the law",
+        "Avoiding misrepresentation",
+        "Independent and objective evaluation",
+        "No professional misconduct"
+      ],
+      "answer": "Independent and objective evaluation"
+    },
+    {
+      "question": "What is the third standard of conduct?",
+      "options": [
+        "Professionalism",
+        "Integrity of Capital Markets",
+        "Duties to Clients",
+        "Duties to Employers"
+      ],
+      "answer": "Duties to Clients"
+    },
+    {
+      "question": "In the duties to employers narrative, what does the sky lounge represent?",
+      "options": [
+        "Loyalty to the employer",
+        "Additional compensation arrangements",
+        "Supervising staff you are responsible for",
+        "Record retention"
+      ],
+      "answer": "Supervising staff you are responsible for"
+    },
+    {
+      "question": "Where are relevant investment documents placed for record retention in the investment process standard?",
+      "options": [
+        "In your drawer",
+        "In the five-year client folder",
+        "In the metro station",
+        "On the sky lounge table"
+      ],
+      "answer": "In your drawer"
+    },
+    {
+      "question": "Which standard of conduct corresponds to the metro station and platform where conflicts are disclosed?",
+      "options": [
+        "Duties to Employers",
+        "Investment Process",
+        "Conflicts of Interest",
+        "Responsibilities as a CFA Candidate"
+      ],
+      "answer": "Conflicts of Interest"
+    }
+  ]
+}
