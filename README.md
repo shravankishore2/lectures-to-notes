@@ -137,3 +137,7 @@ frontend/src/
   components/            Landing, AuthCard, IntakeCard, ProcessingView, NotesView, Player,
                          TranscriptPanel, AskPanel, QuizModal, Library, Nav
 ```
+
+## License
+
+[MIT](LICENSE) © 2026 Shravan Kishore
