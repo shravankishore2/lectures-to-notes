@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: lectures-to-notes-api
+    runtime: docker
+    rootDir: backend
+    plan: starter            # Whisper needs >512 MB RAM; the free plan will OOM
+    healthCheckPath: /health
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 5
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false          # set in the Render dashboard
+      - key: JWT_SECRET
+        generateValue: true  # random per deploy environment; keeps sign-ins valid across restarts
+      - key: CORS_ORIGINS
+        value: https://your-frontend.vercel.app
+      - key: WHISPER_MODEL
+        value: base
+      - key: DATA_DIR
+        value: /data

@@ -1,0 +1,46 @@
+# secrets — never commit real env files (the *.example templates are fine)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+.jwt_secret
+*.pem
+*.key
+
+# python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# runtime data: uploads, transcripts, notes, sqlite db, generated JWT secret
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# media (lecture recordings are large and may be copyrighted)
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.m4a
+*.ogg
+*.flac
+*.opus
+*.aac
+
+# node
+node_modules/
+frontend/dist/
+
+# ide / os
+.idea/
+.vscode/
+.DS_Store
