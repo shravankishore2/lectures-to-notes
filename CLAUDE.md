@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Lectures-to-Notes** — lecture audio/video (uploaded file or pasted link) → Cornell notes + summary + MCQ quiz. Full stack: Python/FastAPI backend with a Whisper + Gemini pipeline, React/Vite frontend. `README.md` has the architecture diagram, API table, and deploy steps; read it first.
 
-The parent folder holds planning material: `../lecture_to_notes_detailed_roadmap.html` (original 5-phase plan) and a ~5 min third-party lecture (kept outside the repo) used as the end-to-end test asset. All five roadmap phases are implemented except optional auth.
+The parent folder holds planning material: `../lecture_to_notes_detailed_roadmap.html` (original 5-phase plan) and a ~5 min third-party lecture (kept outside the repo) used as a local end-to-end test asset. **It is copyrighted: never commit its transcript/notes or use it in the demo** (`outputs/` is gitignored for this reason).
+
+**Read-only demo** (`demo/`, `frontend/src/demo/`, see `demo/README.md`): three MIT OCW lectures (CC BY-NC-SA 4.0) processed once, built by `npm run build:demo` into one inlined `index.html`, served by Caddy on the Oracle VM only at `notes.68-233-96-25.sslip.io/guest?k=<key>` (`guest.py rotate|show|off` on the VM). The demo data is CC BY-NC-SA, not MIT; keep the per-lecture credit on every page.
 
 ## Commands
 
@@ -71,6 +73,7 @@ npm run build                   # verifies the bundle compiles; no JS tests exis
 
 - Gemini flash models return 503 "high demand" often; the fallback chain exists for this. If every model fails, check which respond with a tiny probe before changing defaults (`gemini-2.5-*` are retired → 404).
 - Roadmap says Claude API + pydub; the implementation uses Gemini + raw ffmpeg. Follow the code.
-- Whisper `base` on Apple Silicon CPU: ~1 min for the 5 min sample; budget ~10× real time is pessimistic, ~0.2× is typical.
+- Whisper `base` on Apple Silicon CPU is fast: measured 2026-10-06 on an M4, a 76-min lecture took 2 min 17 s end to end (Whisper + Gemini), i.e. ~0.03× real time.
 - The Render free tier OOMs on Whisper; `render.yaml` pins the Starter plan.
+- The project folder arrived via a Brave download: macOS quarantine/provenance blocked `.venv` (torch: "library load disallowed by system policy", fixed with `xattr -dr com.apple.quarantine .venv`) and makes Node hang at 0% CPU loading rollup's native addon from this Desktop path. If `npm run build`/`vite` hangs, rsync `frontend/` (anchored excludes `/dist /dist-demo`) to a tmp dir and build there.
 - yt-dlp needs updating often (YouTube changes break old versions): `python -m pip install -U yt-dlp` is the first thing to try when link downloads start failing.

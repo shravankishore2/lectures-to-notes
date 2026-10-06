@@ -1,6 +1,32 @@
 # Lecture to Notes
 
-Upload a lecture recording **or paste a link** (YouTube, Vimeo, most lecture platforms, or a direct media URL) and get a **Cornell notes sheet** where every cue links back to the moment it was taught, a **summary**, a **practice quiz**, a searchable **transcript**, and an **"Ask the lecture"** chat — exportable as Markdown, PDF, or Anki flashcards.
+![The demo gallery: three MIT OpenCourseWare lectures, each turned into a Cornell sheet, summary and quiz](docs/screenshots/gallery.jpg)
+
+**Live demo: [https://notes.68-233-96-25.sslip.io/guest](https://notes.68-233-96-25.sslip.io/guest?k=sh48YXkAWVfNIDpfO9vBSVqjnc4HoXIt)**: a read-only gallery of three openly licensed MIT OpenCourseWare lectures, processed once with the real pipeline (see [Live demo](#live-demo)).
+
+Upload a lecture recording **or paste a link** (YouTube, Vimeo, most lecture platforms, or a direct media URL) and get a **Cornell notes sheet** where every cue links back to the moment it was taught, a **summary**, a **practice quiz**, a searchable **transcript**, and an **"Ask the lecture"** chat, exportable as Markdown, PDF, or Anki flashcards.
+
+## Measured
+
+Full pipeline (`cli.py`: ffmpeg → Whisper `base` on CPU → Gemini `gemini-flash-lite-latest`), Apple M4 laptop, 2026-10-06:
+
+| Lecture | Audio | Wall time | Output |
+|---|---|---|---|
+| MIT 8.04 Quantum Physics I, lecture 1 | 76 min | **2 min 17 s** | 41 cues, 29 quiz questions |
+| MIT 6.006 Introduction to Algorithms, lecture 1 | 46 min | 1 min 9 s | 23 cues, 13 questions |
+| MIT 18.06 Linear Algebra, lecture 1 | 40 min | 1 min 3 s | 17 cues, 12 questions |
+
+Most of the time is Whisper; the Gemini stage is a few calls per lecture (one per ~2,250-word part, 3 in parallel, plus the summary). Times depend heavily on the CPU and Whisper model size. **45 backend tests** (`pytest`, ~4 s) cover the pipeline stages and the API with Whisper, ffmpeg and Gemini mocked.
+
+<table><tr>
+<td><img src="docs/screenshots/cornell-notes.jpg" alt="Cornell sheet: cues with ▶ timestamps on the left, notes on the right, lecture video in the sidebar"></td>
+<td><img src="docs/screenshots/quiz.jpg" alt="Quiz: a multiple-choice question answered, with the right option marked"></td>
+</tr><tr>
+<td><img src="docs/screenshots/recall-mode.jpg" alt="Recall mode: notes hidden until you answer the cue and tap to reveal"></td>
+<td align="center"><img src="docs/screenshots/mobile-gallery.jpg" alt="The demo gallery at phone width" width="260"></td>
+</tr></table>
+
+## Architecture
 
 ```
  lecture.mp4 ─┐
@@ -57,11 +83,22 @@ Pipeline only, no server:
 
 ```bash
 cd backend
-python cli.py path/to/lecture.mp4 -o ../outputs        # → outputs/transcript.json, notes.json, notes.md
+python cli.py path/to/lecture.mp4 -o ../outputs     # → outputs/transcript.json, notes.json, notes.md
 python cli.py x -o ../outputs --from-transcript     # re-run just the LLM stage
 ```
 
 Tests (`cd backend && pytest`): 45 tests, pipeline stages mocked — no ffmpeg, Whisper, network or API key needed.
+
+## Live demo
+
+[https://notes.68-233-96-25.sslip.io/guest](https://notes.68-233-96-25.sslip.io/guest?k=sh48YXkAWVfNIDpfO9vBSVqjnc4HoXIt) is a **read-only** build of the same React app: no backend, no uploads, no Gemini calls.
+
+- **Content**: three lectures from [MIT OpenCourseWare](https://ocw.mit.edu), each under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/): Prof. Allan Adams, [8.04 Quantum Physics I, Lecture 1](https://ocw.mit.edu/courses/8-04-quantum-physics-i-spring-2013/resources/lecture-1/) (Spring 2013); Dr. Jason Ku, [6.006 Introduction to Algorithms, Lecture 1](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/resources/lecture-1-algorithms-and-computation/) (Spring 2020); Prof. Gilbert Strang, [18.06 Linear Algebra, Lecture 1](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/resources/lecture-1-the-geometry-of-linear-equations/) (Spring 2010). Each was downloaded from the archive.org link on its OCW page and run through `cli.py` once. The page credits each lecture and its licence, and plays the official MIT OpenCourseWare YouTube upload, so cue timestamps seek the real video.
+- **What works**: Cornell sheet, ▶ timestamp links, recall mode, transcript search, quiz, Markdown/PDF/Anki export. Uploading and *Ask the lecture* are switched off with a note: transcription runs Whisper on your own CPU and the notes use your own Gemini key, so the app is meant to run locally (the demo server has 1 GB of RAM, and open uploads would spend one person's API quota).
+- **How it's built**: `npm run build:demo` (`frontend/vite.demo.config.js`) aliases `../lib/api` to `src/demo/api.js`, which serves the pre-processed lectures, so `NotesView`, `Player`, `TranscriptPanel` and `QuizModal` run unchanged. The JS, CSS and lecture data are inlined into a single `index.html` (~630 KB, ~170 KB gzipped).
+- **How it's served**: Caddy serves that one file as static content (no app process) at `/guest?k=<key>` only; every other path is 404, `robots.txt` disallows everything, and responses carry `X-Robots-Tag: noindex` and `Referrer-Policy: strict-origin` (the key never leaves in a Referer header). The key lives only on the server; `python3 guest.py rotate` issues a new one (the old link stops working), `show` prints it, `off` disables the link, each followed by a graceful Caddy reload. Setup and redeploy: [`demo/`](demo/).
+
+Generated notes are machine-written and can contain mistakes; they are not endorsed by MIT or the instructors.
 
 ## API
 
@@ -136,8 +173,12 @@ frontend/src/
   App.jsx                auth + job state machine, #job=<id> deep links
   components/            Landing, AuthCard, IntakeCard, ProcessingView, NotesView, Player,
                          TranscriptPanel, AskPanel, QuizModal, Library, Nav
+  demo/                  read-only demo: DemoApp (gallery), api.js stand-in, lectures + data/
+demo/                    build_data.py (CLI outputs → demo data), Caddy site, guest.py, deploy.sh
 ```
 
 ## License
 
-[MIT](LICENSE) © 2026 Shravan Kishore
+Code: [MIT](LICENSE) © 2026 Shravan Kishore.
+
+The demo content in `frontend/src/demo/data/` (transcripts and generated notes of MIT OpenCourseWare lectures) is **not** MIT-licensed: it is derived from material © MIT under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) and shared under the same licence, with attribution as listed in [Live demo](#live-demo).

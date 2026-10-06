@@ -39,8 +39,12 @@ backend/data/
 # node
 node_modules/
 frontend/dist/
+frontend/dist-demo/
 
 # ide / os
 .idea/
 .vscode/
 .DS_Store
+
+# local pipeline outputs (the committed sample was a copyrighted lecture)
+outputs/

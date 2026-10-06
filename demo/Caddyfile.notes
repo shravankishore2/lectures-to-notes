@@ -1,0 +1,29 @@
+# Read-only Lecture to Notes demo: one static page, served only at /guest?k=<key>.
+# Append to /etc/caddy/Caddyfile on the VM (it reuses the (site_headers) snippet defined there:
+# gzip, HSTS, X-Robots-Tag noindex). No app process runs; Caddy serves the file itself.
+notes.68-233-96-25.sslip.io {
+	import site_headers
+	header {
+		# the key is in the URL; send only the origin to YouTube / Google Fonts, never the path or query
+		Referrer-Policy strict-origin
+		Cache-Control "no-store"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+	}
+
+	# defines @guest (path /guest + query k=<key>, or `expression false` when off);
+	# written by guest.py, which then reloads Caddy (graceful, no restart)
+	import /etc/caddy/l2n-guest.caddy
+
+	root * /srv/l2n-demo
+	handle /robots.txt {
+		file_server
+	}
+	handle @guest {
+		rewrite * /index.html
+		file_server
+	}
+	handle {
+		respond 404
+	}
+}
