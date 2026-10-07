@@ -13,6 +13,16 @@ MIN_SEGMENT_SECONDS = 2.0
 PIECE_SECONDS = 600  # long recordings are transcribed 10 minutes at a time: bounded memory, progress, cancel points
 
 
+def apply_corrections(transcript: Transcript, corrections: dict[str, str]) -> Transcript:
+    """Whole-word fixes for terms Whisper reliably mishears, e.g. {"804": "8.04"}: it writes spoken course
+    numbers as integers even when `initial_prompt` spells them out."""
+    if not corrections:
+        return transcript
+    pattern = re.compile(r"(?<![\w.])(?:" + "|".join(re.escape(k) for k in sorted(corrections, key=len, reverse=True)) + r")(?![\w]|\.\d)")
+    fix = lambda text: pattern.sub(lambda m: corrections[m.group(0)], text)
+    return transcript.model_copy(update={"segments": [seg.model_copy(update={"text": fix(seg.text)}) for seg in transcript.segments]})
+
+
 def remove_filler(text: str) -> str:
     return " ".join(_FILLER_RE.sub("", text).split())
 
@@ -57,14 +67,19 @@ def transcribe(
     audio_path: str | Path,
     model_name: str = "base",
     on_progress: Callable[[str], None] | None = None,
+    initial_prompt: str | None = None,
 ) -> Transcript:
-    """Whisper transcription. `on_progress` is called between pieces and may raise to abort."""
+    """Whisper transcription. `on_progress` is called between pieces and may raise to abort.
+
+    `initial_prompt` (e.g. "MIT 8.04 Quantum Physics I. Superposition, wavefunction") primes Whisper's
+    vocabulary and spelling; it is passed to every piece, since Whisper only uses it for a call's first window.
+    """
     model = _load_model(model_name)
     total = audio_duration(audio_path)
     report = on_progress or (lambda _m: None)
 
     if total <= PIECE_SECONDS * 1.5:
-        result = model.transcribe(str(audio_path), fp16=False)
+        result = model.transcribe(str(audio_path), fp16=False, initial_prompt=initial_prompt)
         raw, language = result.get("segments", []), result.get("language")
     else:
         raw, language = [], None
@@ -78,7 +93,7 @@ def transcribe(
                      "-i", str(audio_path), "-c", "copy", str(piece)],
                     check=True,
                 )
-                result = model.transcribe(str(piece), fp16=False, language=language)
+                result = model.transcribe(str(piece), fp16=False, language=language, initial_prompt=initial_prompt)
                 language = language or result.get("language")
                 for seg in result.get("segments", []):
                     raw.append({"start": seg["start"] + offset, "end": seg["end"] + offset, "text": seg["text"]})

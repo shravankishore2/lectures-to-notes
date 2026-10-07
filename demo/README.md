@@ -13,17 +13,21 @@ No app process runs on the server.
 
 ## Regenerate the lectures
 
-Sources are the archive.org links on each OCW lecture page (see `frontend/src/demo/lectures.js`):
+Sources are the archive.org links on each OCW lecture page (see `frontend/src/demo/lectures.js`),
+saved as `<media_dir>/<slug>.mp4`:
 
 ```bash
-cd backend
-for n in qp1 alg1 la1; do
-  start=$(date +%s)
-  ../.venv/bin/python cli.py /path/to/$n.mp4 -o /tmp/runs/$n
-  echo "$n rc=$? seconds=$(( $(date +%s) - start ))" >> /tmp/runs/timings.txt
-done
-cd .. && .venv/bin/python demo/build_data.py /tmp/runs --whisper-model base
+demo/process.sh <media_dir> /tmp/runs base qp1 alg1 la1   # timed; applies prompts.json corrections
+.venv/bin/python demo/build_data.py /tmp/runs              # → frontend/src/demo/data/<slug>.json
+demo/deploy.sh
 ```
+
+`prompts.json` holds, per lecture, a Whisper `initial_prompt` and whole-word transcript
+`corrections`. Whisper writes spoken course numbers as integers ("804" for 8.04) even when the
+prompt spells them out, so the corrections are what fix them. The prompt is only passed with
+`WHISPER_PROMPT=1`: measured against MIT's captions on 2026-10-07 it made `base` *less* accurate
+(word error rate 10.1% → 13.0% on 8.04, 7.4% → 11.7% on 6.006) and cut its segment count 3–4×,
+which coarsens cue timestamps.
 
 ## First-time VM setup (already done 2026-10-07)
 

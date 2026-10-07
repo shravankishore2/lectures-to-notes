@@ -15,6 +15,7 @@ OUTPUTS_DIR = DATA_DIR / "outputs"
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR / 'jobs.db'}")
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",") if o.strip()]
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
+WHISPER_INITIAL_PROMPT = os.getenv("WHISPER_INITIAL_PROMPT") or None  # vocabulary hint for every lecture; the CLI can override it per lecture
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "500"))
 
 # --- auth

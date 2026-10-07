@@ -7,6 +7,7 @@ from pathlib import Path
 
 from app import config
 from app.pipeline import Transcript, extract_audio, generate_notes, notes_to_markdown, transcribe
+from app.pipeline.transcribe import apply_corrections
 
 
 def main() -> int:
@@ -14,6 +15,18 @@ def main() -> int:
     parser.add_argument("input", help="Path to a video or audio file")
     parser.add_argument("-o", "--out", default="outputs", help="Output directory (default: ./outputs)")
     parser.add_argument("--whisper-model", default=config.WHISPER_MODEL, help="Whisper model size (tiny/base/small/medium)")
+    parser.add_argument(
+        "--initial-prompt",
+        default=config.WHISPER_INITIAL_PROMPT,
+        help='Whisper vocabulary hint for this lecture, e.g. "MIT 8.04 Quantum Physics I. Superposition, wavefunction"',
+    )
+    parser.add_argument(
+        "--correct",
+        action="append",
+        default=[],
+        metavar="WRONG=RIGHT",
+        help="Whole-word transcript fix applied after Whisper, repeatable, e.g. --correct 804=8.04",
+    )
     parser.add_argument("--skip-llm", action="store_true", help="Stop after transcription")
     parser.add_argument("--from-transcript", action="store_true", help="Reuse <out>/transcript.json instead of re-running ffmpeg + Whisper")
     args = parser.parse_args()
@@ -29,9 +42,15 @@ def main() -> int:
         wav = extract_audio(args.input, out / "audio.wav")
         print(f"[1/3] Audio extracted → {wav}")
 
-        transcript = transcribe(wav, model_name=args.whisper_model)
+        transcript = transcribe(wav, model_name=args.whisper_model, initial_prompt=args.initial_prompt)
         transcript_file.write_text(transcript.model_dump_json(indent=2), encoding="utf-8")
         print(f"[2/3] Transcript ({len(transcript.segments)} segments, {transcript.duration:.0f}s) → {transcript_file}")
+
+    corrections = dict(c.split("=", 1) for c in args.correct)
+    if corrections:
+        transcript = apply_corrections(transcript, corrections)
+        transcript_file.write_text(transcript.model_dump_json(indent=2), encoding="utf-8")
+        print(f"      Applied transcript corrections: {corrections}")
 
     if args.skip_llm:
         return 0

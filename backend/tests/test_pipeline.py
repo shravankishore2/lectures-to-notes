@@ -1,3 +1,5 @@
+import importlib
+
 import pytest
 from pydantic import ValidationError
 
@@ -119,3 +121,49 @@ def test_format_progress_uses_raw_numbers_not_ansi_strings():
     assert format_progress(d) == "Downloading 50% (5.0 / 10.0 MB) · 1m 15s left"
     assert format_progress({"downloaded_bytes": 1_048_576}) == "Downloading 1.0 MB"
     assert format_progress({"downloaded_bytes": 0, "total_bytes_estimate": 2 * 1_048_576, "eta": 5}) == "Downloading 0% (0.0 / 2.0 MB) · 5s left"
+
+
+@pytest.fixture
+def transcribe_mod():
+    return importlib.import_module("app.pipeline.transcribe")
+
+
+class _RecordingWhisper:
+    def __init__(self):
+        self.calls = []
+
+    def transcribe(self, path, **kwargs):
+        self.calls.append(kwargs)
+        return {"language": "en", "segments": [{"start": 0.0, "end": 4.0, "text": f"MIT 8.04 part {len(self.calls)}"}]}
+
+
+def test_transcribe_passes_initial_prompt(monkeypatch, transcribe_mod):
+    model = _RecordingWhisper()
+    monkeypatch.setattr(transcribe_mod, "_load_model", lambda name: model)
+    monkeypatch.setattr(transcribe_mod, "audio_duration", lambda p: 60.0)
+    out = transcribe_mod.transcribe("x.wav", initial_prompt="MIT 8.04 Quantum Physics I")
+    assert model.calls == [{"fp16": False, "initial_prompt": "MIT 8.04 Quantum Physics I"}]
+    assert out.segments[0].text == "MIT 8.04 part 1"
+
+
+def test_transcribe_passes_initial_prompt_to_every_piece(monkeypatch, transcribe_mod):
+    model = _RecordingWhisper()
+    monkeypatch.setattr(transcribe_mod, "_load_model", lambda name: model)
+    monkeypatch.setattr(transcribe_mod, "audio_duration", lambda p: transcribe_mod.PIECE_SECONDS * 2.5)
+    monkeypatch.setattr(transcribe_mod.subprocess, "run", lambda *a, **k: None)  # no ffmpeg cutting
+    out = transcribe_mod.transcribe("x.wav", initial_prompt="MIT 6.006")
+    assert len(model.calls) == 3 and all(c["initial_prompt"] == "MIT 6.006" for c in model.calls)
+    assert [s.start for s in out.segments] == [0.0, transcribe_mod.PIECE_SECONDS, transcribe_mod.PIECE_SECONDS * 2]
+
+
+def test_apply_corrections_whole_words_only(transcribe_mod):
+    t = Transcript(language="en", duration=9, segments=[
+        TranscriptSegment(start=0, end=3, text="Welcome to 804. The goal of 804 is"),
+        TranscriptSegment(start=3, end=6, text="8.04 stays, 18040 and 804.5 and x804 stay, 1806, too"),
+    ])
+    out = transcribe_mod.apply_corrections(t, {"804": "8.04", "1806": "18.06"})
+    assert [s.text for s in out.segments] == [
+        "Welcome to 8.04. The goal of 8.04 is",
+        "8.04 stays, 18040 and 804.5 and x804 stay, 18.06, too",
+    ]
+    assert transcribe_mod.apply_corrections(t, {}) is t

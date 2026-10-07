@@ -54,7 +54,7 @@ def app_client(tmp_path, monkeypatch, sample_notes, gate):
         Path(dst).write_bytes(b"RIFF")
         return Path(dst)
 
-    def fake_transcribe(wav, model_name="base", on_progress=None):
+    def fake_transcribe(wav, model_name="base", on_progress=None, initial_prompt=None):
         gate.wait(5)
         return Transcript(language="en", duration=3.0, segments=[TranscriptSegment(start=0, end=3, text="hello world")])
 

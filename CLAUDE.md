@@ -12,13 +12,13 @@ The parent folder holds planning material: `../lecture_to_notes_detailed_roadmap
 
 ## Commands
 
-The Python venv lives at the repo root (`.venv/`), shared by backend and CLI. Its `pip` shim is broken (venv was moved) — always use `python -m pip`.
+The Python venv lives at the repo root (`.venv/`, Homebrew Python 3.13), shared by backend and CLI; use `python -m pip`.
 
 ```bash
 # backend (run from backend/)
 ../.venv/bin/python -m pip install -r requirements-dev.txt
 ../.venv/bin/python -m uvicorn app.main:app --reload --port 8000
-../.venv/bin/python -m pytest                 # 45 tests, ~3 s, no ffmpeg/Whisper/yt-dlp network/API key needed
+../.venv/bin/python -m pytest                 # 48 tests, ~3 s, no ffmpeg/Whisper/yt-dlp network/API key needed
 ../.venv/bin/python -m pytest tests/test_api.py::test_full_flow_and_cleanup   # single test
 
 # pipeline without the server (from backend/)
@@ -73,7 +73,7 @@ npm run build                   # verifies the bundle compiles; no JS tests exis
 
 - Gemini flash models return 503 "high demand" often; the fallback chain exists for this. If every model fails, check which respond with a tiny probe before changing defaults (`gemini-2.5-*` are retired → 404).
 - Roadmap says Claude API + pydub; the implementation uses Gemini + raw ffmpeg. Follow the code.
-- Whisper `base` on Apple Silicon CPU is fast: measured 2026-10-06 on an M4, a 76-min lecture took 2 min 17 s end to end (Whisper + Gemini), i.e. ~0.03× real time.
+- Whisper `base` on Apple Silicon CPU is fast: on an M4 a 76-min lecture takes 2 min 17 s – 2 min 40 s end to end (Whisper + Gemini), ~0.03× real time; `small` took ~1.9× as long on a 46-min lecture.
+- Whisper writes spoken course numbers as integers ("804", "1806"). `initial_prompt` doesn't fix that and measurably hurts `base` (higher WER vs MIT captions, 3–4× fewer segments); use `cli.py --correct 804=8.04` (`demo/prompts.json`). Details in `demo/README.md`.
 - The Render free tier OOMs on Whisper; `render.yaml` pins the Starter plan.
-- The project folder arrived via a Brave download: macOS quarantine/provenance blocked `.venv` (torch: "library load disallowed by system policy", fixed with `xattr -dr com.apple.quarantine .venv`) and makes Node hang at 0% CPU loading rollup's native addon from this Desktop path. If `npm run build`/`vite` hangs, rsync `frontend/` (anchored excludes `/dist /dist-demo`) to a tmp dir and build there.
 - yt-dlp needs updating often (YouTube changes break old versions): `python -m pip install -U yt-dlp` is the first thing to try when link downloads start failing.

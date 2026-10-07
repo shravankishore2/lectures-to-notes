@@ -197,7 +197,7 @@ def _run(job_id: str):
     src.unlink(missing_ok=True)
 
     report(f"Transcribing with Whisper ({config.WHISPER_MODEL})")
-    transcript: Transcript = transcribe(wav, model_name=config.WHISPER_MODEL, on_progress=report)
+    transcript: Transcript = transcribe(wav, model_name=config.WHISPER_MODEL, on_progress=report, initial_prompt=config.WHISPER_INITIAL_PROMPT)
     _checkpoint(job_id)
     transcript_path(job_id).write_text(transcript.model_dump_json(indent=2), encoding="utf-8")
 

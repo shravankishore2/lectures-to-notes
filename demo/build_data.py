@@ -1,9 +1,9 @@
 """Bundle CLI outputs into the demo's data files.
 
-    # 1. process each lecture once with the real pipeline (from backend/), timing it:
-    ../.venv/bin/python cli.py <lecture.mp4> -o <runs>/<slug>
-    # 2. bundle (from the repo root); timings.txt holds lines like "qp1 rc=0 seconds=660"
-    .venv/bin/python demo/build_data.py <runs> --whisper-model base
+    # 1. process each lecture once with the real pipeline, timed, with its prompt + corrections:
+    demo/process.sh <media_dir> <runs> base qp1 alg1 la1
+    # 2. bundle; timings.txt holds lines like "qp1 rc=0 seconds=159 model=base"
+    .venv/bin/python demo/build_data.py <runs>
 
 Writes frontend/src/demo/data/<slug>.json = {notes, transcript, markdown, anki, processing}.
 """
@@ -22,22 +22,24 @@ from app.pipeline import NotesOutput, Transcript, notes_to_anki, notes_to_markdo
 
 SLUGS = ["qp1", "alg1", "la1"]
 OUT = ROOT / "frontend" / "src" / "demo" / "data"
+HINTS = json.loads((ROOT / "demo" / "prompts.json").read_text(encoding="utf-8"))
 
 
-def read_timings(path: Path) -> dict[str, int]:
+def read_timings(path: Path) -> dict[str, dict]:
+    """Last successful run per slug: {"seconds": int, "model": str | None, "prompt": bool}."""
     timings = {}
     if path.exists():
         for line in path.read_text().splitlines():
-            m = re.match(r"(\S+) rc=0 seconds=(\d+)", line)
+            m = re.match(r"(\S+) rc=0 seconds=(\d+)(?: model=(\S+))?(?: prompt=(\d))?", line)
             if m:
-                timings[m[1]] = int(m[2])
+                timings[m[1]] = {"seconds": int(m[2]), "model": m[3], "prompt": m[4] == "1"}
     return timings
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("runs", type=Path, help="Directory holding <slug>/notes.json + transcript.json and timings.txt")
-    parser.add_argument("--whisper-model", default="base")
+    parser.add_argument("--whisper-model", default="base", help="Recorded when timings.txt has no model= field")
     args = parser.parse_args()
 
     timings = read_timings(args.runs / "timings.txt")
@@ -46,9 +48,16 @@ def main() -> int:
         run = args.runs / slug
         notes = NotesOutput.model_validate_json((run / "notes.json").read_text(encoding="utf-8"))
         transcript = Transcript.model_validate_json((run / "transcript.json").read_text(encoding="utf-8"))
-        processing = {"date": date.today().isoformat(), "whisper_model": args.whisper_model, "audio_seconds": round(transcript.duration)}
-        if slug in timings:
-            processing["seconds"] = timings[slug]
+        run_info = timings.get(slug, {})
+        processing = {
+            "date": date.today().isoformat(),
+            "whisper_model": run_info.get("model") or args.whisper_model,
+            "whisper_prompt": HINTS.get(slug, {}).get("prompt") if run_info.get("prompt") else None,
+            "corrections": HINTS.get(slug, {}).get("corrections", {}),
+            "audio_seconds": round(transcript.duration),
+        }
+        if "seconds" in run_info:
+            processing["seconds"] = run_info["seconds"]
         data = {
             "notes": notes.model_dump(),
             "transcript": {

@@ -1,0 +1,14 @@
+{
+  "qp1": {
+    "prompt": "Welcome to 8.04, Quantum Physics I, with Professor Allan Adams, Barton Zwiebach and Matt Evans. In 8.04 we study superposition, the wavefunction, electron spin, hardness and color boxes, Planck's constant.",
+    "corrections": {"804": "8.04"}
+  },
+  "alg1": {
+    "prompt": "Welcome to 6.006, Introduction to Algorithms, with Jason Ku, Erik Demaine and Justin Solomon. In 6.006 we cover algorithms, data structures, asymptotic analysis, big O, the word-RAM model, induction, correctness and efficiency.",
+    "corrections": {"6006": "6.006"}
+  },
+  "la1": {
+    "prompt": "This is 18.06, Linear Algebra, with Professor Gilbert Strang. In 18.06 we study linear equations, the row picture, the column picture, matrix A times vector x, linear combinations, elimination and singular matrices.",
+    "corrections": {"1806": "18.06"}
+  }
+}

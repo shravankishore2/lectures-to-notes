@@ -8,15 +8,26 @@ Upload a lecture recording **or paste a link** (YouTube, Vimeo, most lecture pla
 
 ## Measured
 
-Full pipeline (`cli.py`: ffmpeg → Whisper `base` on CPU → Gemini `gemini-flash-lite-latest`), Apple M4 laptop, 2026-10-06:
+Full pipeline (`cli.py`: ffmpeg → Whisper `base` on CPU → Gemini `gemini-flash-lite-latest`), Apple M4 laptop, 2026-10-07; these are the runs behind the live demo:
 
 | Lecture | Audio | Wall time | Output |
 |---|---|---|---|
-| MIT 8.04 Quantum Physics I, lecture 1 | 76 min | **2 min 17 s** | 41 cues, 29 quiz questions |
-| MIT 6.006 Introduction to Algorithms, lecture 1 | 46 min | 1 min 9 s | 23 cues, 13 questions |
-| MIT 18.06 Linear Algebra, lecture 1 | 40 min | 1 min 3 s | 17 cues, 12 questions |
+| MIT 8.04 Quantum Physics I, lecture 1 | 76 min | **2 min 40 s** | 41 cues, 28 quiz questions |
+| MIT 6.006 Introduction to Algorithms, lecture 1 | 46 min | 1 min 38 s | 23 cues, 13 questions |
+| MIT 18.06 Linear Algebra, lecture 1 | 40 min | 1 min 17 s | 17 cues, 12 questions |
 
-Most of the time is Whisper; the Gemini stage is a few calls per lecture (one per ~2,250-word part, 3 in parallel, plus the summary). Times depend heavily on the CPU and Whisper model size. **45 backend tests** (`pytest`, ~4 s) cover the pipeline stages and the API with Whisper, ffmpeg and Gemini mocked.
+The same three took 2 min 17 s, 1 min 9 s and 1 min 3 s on 2026-10-06, so expect about ±25% between runs. Most of the time is Whisper; Gemini is a few calls per lecture (one per ~2,250-word part, 3 in parallel, plus the summary). **48 backend tests** (`pytest`, ~3 s) cover the pipeline stages and the API with Whisper, ffmpeg and Gemini mocked.
+
+### Whisper `base` vs `small`
+
+6.006 lecture 1 (46 min), same M4, end to end, transcript corrections on, no `initial_prompt`. Word error rate is against MIT's human English captions on the official YouTube upload, both sides lowercased with punctuation and filler words removed (`um`, `uh`, …, as the pipeline does).
+
+| Model | Lecture length | End-to-end time | WER vs captions | Segments | Visible differences |
+|---|---|---|---|---|---|
+| `base` | 45:32 | 1 min 38 s (1 min 9 s on 2026-10-06) | 7.4% | 551 | Drops short phrases ("an algorithm is really", "so you can't"); "proof" for "prove". Gets "Demaine" right |
+| `small` | 45:32 | 3 min 2 s | 6.5% | 591 | Keeps more of what was said; of 113 wording differences from `base`, the captions agree with `small` in 44 and with `base` in 23. Hears "Demaine" as "domain" and once invents a phrase ("rive what am I no") |
+
+`small` is ~1.9× slower here for ~1 point lower WER; the demo uses `base` (`WHISPER_MODEL` selects it). Both write spoken course numbers as integers ("804" for 8.04, "1806" for 18.06), which a Whisper `initial_prompt` did not fix: with a prompt, `base` got *worse* (WER 7.4% → 11.7% here, 10.1% → 13.0% on 8.04, and 3–4× fewer, coarser segments). Course numbers are fixed with whole-word transcript corrections instead (`cli.py --correct 804=8.04`, per lecture in [`demo/prompts.json`](demo/prompts.json)).
 
 <table><tr>
 <td><img src="docs/screenshots/cornell-notes.jpg" alt="Cornell sheet: cues with ▶ timestamps on the left, notes on the right, lecture video in the sidebar"></td>
@@ -85,9 +96,11 @@ Pipeline only, no server:
 cd backend
 python cli.py path/to/lecture.mp4 -o ../outputs     # → outputs/transcript.json, notes.json, notes.md
 python cli.py x -o ../outputs --from-transcript     # re-run just the LLM stage
+python cli.py lecture.mp4 -o ../outputs --whisper-model small --correct 804=8.04 \
+    --initial-prompt "Welcome to 8.04, Quantum Physics I"   # model, transcript fixes, optional Whisper hint
 ```
 
-Tests (`cd backend && pytest`): 45 tests, pipeline stages mocked — no ffmpeg, Whisper, network or API key needed.
+Tests (`cd backend && pytest`): 48 tests, pipeline stages mocked — no ffmpeg, Whisper, network or API key needed.
 
 ## Live demo
 
@@ -137,6 +150,7 @@ Notes schema (`backend/app/pipeline/schema.py`):
 | `GEMINI_MODEL` | `gemini-flash-lite-latest` | primary model |
 | `GEMINI_FALLBACK_MODELS` | `gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.5-flash` | tried when the primary fails; the last model that worked is tried first next time |
 | `WHISPER_MODEL` | `base` | `tiny`/`base`/`small`/`medium` |
+| `WHISPER_INITIAL_PROMPT` | unset | vocabulary hint passed to Whisper for every lecture (the CLI's `--initial-prompt` overrides it). Measured to hurt `base` accuracy; see [Measured](#measured) |
 | `JWT_SECRET` | auto-generated into `DATA_DIR/.jwt_secret` | **set this in production** |
 | `TOKEN_TTL_HOURS` | `336` | sign-in lifetime |
 | `ALLOW_SIGNUP` | `true` | set `false` to close registration |
